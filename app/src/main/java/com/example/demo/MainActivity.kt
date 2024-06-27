@@ -1,14 +1,12 @@
 package com.example.demo
 
 import android.annotation.SuppressLint
-import android.media.AudioAttributes
-import android.media.AudioManager
-import android.media.SoundPool
+import android.media.MediaPlayer
 import android.os.Bundle
 import android.view.KeyEvent
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -17,44 +15,46 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.demo.ui.theme.DemoTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private lateinit var soundPool: SoundPool
-    private var soundId: Int = 1
-
+    private lateinit var mediaPlayer: MediaPlayer
+    private val viewModel: DemoViewModel by viewModels()
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        mediaPlayer = MediaPlayer.create(this, R.raw.keypress)
 
         setContent {
             DemoTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
 
+                    val state by viewModel.uiState.collectAsState()
+
                     val focusRequester = remember { FocusRequester() }
                     val keyboardController = LocalSoftwareKeyboardController.current
-                    val cursorPosition = remember { mutableStateOf(1) }
-                    var textFieldValue by remember { mutableStateOf(TextFieldValue(text = "1", selection = TextRange(cursorPosition.value)) ) }
 
+                    val text by remember {
+                        mutableStateOf(state.text1)
+                    }
 
                     Box(
                         contentAlignment = Alignment.Center
@@ -62,9 +62,9 @@ class MainActivity : ComponentActivity() {
 
 
                         OutlinedTextField(
-                            value = textFieldValue,
+                            value = state.text1,
                             onValueChange = { newValue ->
-                                textFieldValue = newValue
+                                viewModel.add(Event.TextChanged(newValue))
                             },
                             modifier = Modifier
                                 .focusRequester(focusRequester)
@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
 
 
     override fun onDestroy() {
-        soundPool.release()
+        mediaPlayer.release()
         super.onDestroy()
     }
 
@@ -99,8 +99,9 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun playSound() {
-
-
+        if (::mediaPlayer.isInitialized) {
+            mediaPlayer.start()
+        }
     }
 
 }
