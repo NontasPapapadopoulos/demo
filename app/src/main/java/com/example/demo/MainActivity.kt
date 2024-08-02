@@ -32,13 +32,11 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
-    private lateinit var mediaPlayer: MediaPlayer
     private val viewModel: DemoViewModel by viewModels()
     @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        mediaPlayer = MediaPlayer.create(this, R.raw.keypress)
 
         setContent {
             DemoTheme {
@@ -52,9 +50,6 @@ class MainActivity : ComponentActivity() {
                     val focusRequester = remember { FocusRequester() }
                     val keyboardController = LocalSoftwareKeyboardController.current
 
-                    val text by remember {
-                        mutableStateOf(state.text1)
-                    }
 
                     Box(
                         contentAlignment = Alignment.Center
@@ -78,29 +73,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-        }
-    }
-
-
-
-    override fun onDestroy() {
-        mediaPlayer.release()
-        super.onDestroy()
-    }
-
-
-
-    @SuppressLint("RestrictedApi")
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event?.action == KeyEvent.ACTION_DOWN) {
-            playSound()
-        }
-        return super.dispatchKeyEvent(event)
-    }
-
-    private fun playSound() {
-        if (::mediaPlayer.isInitialized) {
-            mediaPlayer.start()
         }
     }
 
